@@ -1,0 +1,41 @@
+====================================================================
+ EXCEL NAVIGATION - USER GUIDE  (for the end user)
+====================================================================
+ You can hand this file to the people you give the navigation-enabled
+ Excel folder to, together with the files.
+
+FIRST OPEN
+ 1. Take the WHOLE folder together (keep all files in one place).
+ 2. If the files came from the internet/email: right-click the file
+    (or the ZIP) > Properties > check "Unblock" > OK.
+ 3. Open the main file. If a yellow bar appears at the top, click
+    "Enable Content" (only the first time). The "Navigation" panel
+    appears at the top-right.
+
+NAVIGATING
+ - SELECT a menu cell, then click the  Forward (>)  button on the panel
+   -> the link target opens and the file you were in closes.
+ - Back (<) -> returns to the file you came from.
+ - The "path" text on the panel shows where you currently are, live.
+ - NOTE: CLICKING a menu cell does not navigate; it only selects it.
+   To go, you must use the Forward button.
+
+THE PANEL
+ - Can be dragged (its position is remembered).
+ - Closes with X (only the panel closes; Excel keeps working).
+ - Reopen it with:  Ctrl + Shift + N
+ - Note: The "Link Cell" button is for the person who BUILDS/maintains the
+   project (adding menu links). If you only navigate, you do not need it.
+
+TROUBLESHOOTING
+ - Panel does not appear / buttons do nothing: the most common cause is
+   macros are not enabled. Click "Enable Content" on the yellow bar; if the
+   file is "blocked", use Properties > "Unblock".
+ - If the panel is missing on EVERY NEW file (yellow bar keeps appearing):
+   make the folder a "Trusted Location" once, so all files in it run macros
+   automatically and the yellow bar never shows again:
+     Excel > File > Options > Trust Center > Trust Center Settings... >
+     Trusted Locations > "Add new location..." > pick the folder >
+     check "Subfolders of this location are also trusted" > OK.
+   (Only do this for folders you created and trust.)
+ - If your organization blocks macros, contact your IT team.

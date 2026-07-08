@@ -1,0 +1,11 @@
+# Excel lock/temp files
+~$*.xls*
+*.tmp
+
+# Runtime file created per-project by the navigation system
+nav_map.txt
+
+# Windows / OS
+Thumbs.db
+Desktop.ini
+.DS_Store

@@ -1,0 +1,108 @@
+====================================================================
+ EXCEL NAVIGATION SYSTEM  -  SETUP GUIDE
+====================================================================
+
+WHAT IS IT?
+  A floating panel that lets you navigate between separate Excel (.xlsm)
+  files like a browser: Back / Forward buttons + a live location path.
+  Opening a child file closes the parent, so only one window stays open.
+  You build the menu links visually with the "Link Cell" button - no
+  text files to edit by hand.
+
+WHAT IS IN THIS KIT?
+  INSTALL.cmd      <- the only file you double-click
+  system\          <- everything else (scripts + this guide)
+
+--------------------------------------------------------------------
+ QUICK START  (do the 2 one-time settings, then double-click INSTALL)
+--------------------------------------------------------------------
+  1) Copy INSTALL.cmd AND the "system" folder into the SAME folder as
+     your Excel files (your "project folder").
+  2) Do the two one-time Excel settings below (Step 1 and Step 2).
+  3) Double-click INSTALL.cmd.
+
+  INSTALL.cmd does everything in one click:
+    - converts any .xlsx here to .xlsm and injects the navigation system
+    - turns ON the auto-watcher (new .xlsx you drop in later are set up
+      automatically, within ~2 seconds)
+
+--------------------------------------------------------------------
+ STEP 1  -  ENABLE VBA ACCESS   (one-time, per computer)
+--------------------------------------------------------------------
+  Needed so the installer can inject the system. Without it INSTALL.cmd
+  will say "Cannot access the VBA project".
+    Excel > File > Options > Trust Center > Trust Center Settings... >
+    Macro Settings > check "Trust access to the VBA project object model"
+    > OK.
+  NOTE: only needed on the machine that INSTALLS the system. People you
+  just send the finished files to do NOT need this.
+
+--------------------------------------------------------------------
+ STEP 2  -  MAKE THE FOLDER A TRUSTED LOCATION   (one-time, per computer)
+--------------------------------------------------------------------
+  Needed so the panel actually SHOWS. Excel blocks macros on new files by
+  default (a yellow "Enable Content" bar). Trusting the folder makes every
+  file in it run macros automatically - no yellow bar, panel appears.
+    Excel > File > Options > Trust Center > Trust Center Settings... >
+    Trusted Locations > "Add new location..." > Browse to your project
+    folder > check "Subfolders of this location are also trusted" > OK.
+  WARNING: files in a Trusted Location run macros WITHOUT asking. Only do
+  this for folders you created and trust. Not for network/shared folders.
+
+  (Tip: avoid OneDrive-synced folders for the project - a plain local
+   folder like C:\MyProject is more reliable. Put a desktop SHORTCUT to it
+   if you want easy access, not a copy.)
+
+--------------------------------------------------------------------
+ STEP 3  -  DOUBLE-CLICK INSTALL.cmd
+--------------------------------------------------------------------
+  It converts + injects your files and starts the auto-watcher. If Windows
+  shows "Windows protected your PC", click "More info" > "Run anyway".
+  When it finishes you can close the window.
+
+--------------------------------------------------------------------
+ BUILD YOUR MENU   (Link Cell)
+--------------------------------------------------------------------
+  Open your MAIN file. The "Navigation" panel appears (top-right).
+    a. Select the cell you want to turn into a menu link.
+    b. Click "Link Cell" on the panel.
+    c. Pick the target .xlsm/.xlsx file.
+    d. If it has several sheets, pick which sheet to open.
+    e. Done: the cell turns blue + underlined; the link is saved.
+  IMPORTANT: make the FIRST link from your MAIN (start) file, so the system
+  marks it as the root. A nav_map.txt file is created automatically - you
+  never edit it by hand.
+  To navigate: select a menu cell, then click Forward. Back returns to the
+  previous file. To remove a link: select the linked cell, click Link Cell
+  again > Yes.
+
+--------------------------------------------------------------------
+ THE AUTO-WATCHER   (turned on by INSTALL.cmd)
+--------------------------------------------------------------------
+  Watches your project folder in the background and starts itself at every
+  logon. Any .xlsx dropped in is converted to .xlsm + injected within ~2 s.
+  Uses practically 0% CPU (it scans the small folder every 2 seconds).
+    - Turn it OFF:  open the  system  folder, double-click STOP_WATCHER.cmd
+    - Turn it ON:   double-click INSTALL.cmd again, or system\START_WATCHER.cmd
+  You don't strictly need the watcher: instead you can just double-click
+  INSTALL.cmd again whenever you add files (it only sets up the new ones).
+
+--------------------------------------------------------------------
+ TROUBLESHOOTING
+--------------------------------------------------------------------
+  - "Cannot access the VBA project" -> do Step 1, then run INSTALL again.
+  - Converts but the panel does NOT show -> do Step 2 (Trusted Location),
+    or click "Enable Content" on the yellow bar for that file.
+  - "CONVERT ERROR ... Subscript out of range" or file locked -> close the
+    file/Excel; if the folder is OneDrive "online-only", right-click the
+    file > "Always keep on this device"; a plain local folder avoids this.
+  - New file not converted -> the watcher isn't running. Double-click
+    INSTALL.cmd (or system\START_WATCHER.cmd).
+  - If your organization blocks macros, contact your IT team.
+
+--------------------------------------------------------------------
+ SENDING THE FINISHED FILES TO OTHERS
+--------------------------------------------------------------------
+  Give them the whole project folder (all .xlsm + nav_map.txt). They only
+  need to enable macros to see the panel (Step 2 / "Enable Content"). They
+  do NOT need Step 1 or the installer. See USAGE.txt.

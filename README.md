@@ -19,8 +19,7 @@ every file so you can move around like a browser: click **Forward** to drill int
 You build the links **visually** by clicking a cell and pressing **Link Cell** — no config files,
 no macros to write. One `INSTALL.cmd` sets everything up in a single click.
 
-> _Add a screenshot here: put an image at `docs/screenshot.png` and it will show below._
-> <!-- ![Excel Navigator panel](docs/screenshot.png) -->
+![Excel Navigator — jumping between files with Back / Forward and a live breadcrumb](docs/demo.gif)
 
 ---
 

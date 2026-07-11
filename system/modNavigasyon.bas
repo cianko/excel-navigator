@@ -3,13 +3,20 @@ Attribute VB_Name = "modNavigasyon"
 ' Excel Navigator  -  (c) 2026 Ahmet Zan  -  MIT License
 ' Developed by Ahmet Zan
 '====================================================================
-' MODUL: modNavigasyon  (v6)
+' MODUL: modNavigasyon  (v8)
 '  - Path: HER ZAMAN kokten su ana TUM zincir (gecmis + canli konum)
 '  - Panel konumu hatirlanir (TEMP\nav_panel.txt), Excel'e goreli
 '  - Olaylar ile panel Excel penceresi ICINDE kalir (clamp)
 '  - X butonu: sadece paneli kapatir (Ctrl+Shift+N ile tekrar acilir)
 '  - v6: "Scan for New Files" ozelligi kaldirildi (yeni dosyalar kur.ps1 ile
 '        eklenir); NavKonumUygula'ya gPanelAcik guard'i eklendi.
+'  - v8: (1) PATH SIFIRLAMA GARANTISI: gecmis yigini bosalinca (kok dosyaya
+'        donuldugunde) path onbellegi imza kontrolu ile aninda sifirlanir;
+'        son gecmis girisi cekilince dosya SILINIR (bos yigin = dosya yok).
+'        (2) HARICI BAGLANTI: Link Cell artik Excel disi dosyalara da baglanir
+'        (nav_map sayfa alani "@EXT"); Ileri bunlari varsayilan Windows
+'        uygulamasiyla AYRI pencerede acar - bu dosya kapanmaz, gecmise
+'        eklenmez, path degismez.
 '====================================================================
 Option Explicit
 
@@ -19,6 +26,7 @@ Private Const KONUM_ADI   As String = "nav_panel.txt"
 Private Const KAYDET      As Boolean = True
 Private Const KOK_ANAHTAR As String = "__ROOT__"
 Private Const NAV_ONEK    As String = "nav_"
+Private Const HARICI_ISARET As String = "@EXT"  ' nav_map sayfa alaninda: hedef Excel DEGIL, harici dosya
 
 ' --- panel durum degiskenleri (her dosyada kendi kopyasi; TEMP ile koprulenir) ---
 Private gPanelAcik As Boolean
@@ -27,7 +35,8 @@ Private gLastL As Double, gLastT As Double      ' son uygulanan form konumu
 Private gLastAppL As Double, gLastAppT As Double, gLastAppW As Double, gLastAppH As Double
 Private gTimerPlanli As Boolean, gTimerZaman As Double
 Public gSecilenSayfa As String                  ' sayfa secim formu sonucu
-Private gZincir As String                        ' path zinciri ONBELLEGI (dosya acilisinda 1 kez okunur)
+Private gZincir As String                        ' path zinciri ONBELLEGI (imza degisince tazelenir)
+Private gZincirSig As String                     ' onbellegin ait oldugu gecmis-dosyasi imzasi ("" = yigin bos)
 Private gNavCalisiyor As Boolean                 ' navigasyon suruyor mu (re-entrant/cift-tetik korumasi)
 
 Private Function AY() As String
@@ -97,7 +106,11 @@ Private Function YolCoz(ByVal anahtar As String, ByRef hataMsj As String) As Str
                     If b > 0 Then sag = Trim$(Left$(sag, b - 1))
                     Close #ff
                     sag = Replace(sag, "\", Sep()): sag = Replace(sag, "/", Sep())
-                    YolCoz = kok & Sep() & sag
+                    If Mid$(sag, 2, 1) = ":" Or Left$(sag, 2) = (Sep() & Sep()) Then
+                        YolCoz = sag            ' MUTLAK yol (farkli surucudeki harici hedef)
+                    Else
+                        YolCoz = kok & Sep() & sag
+                    End If
                     Exit Function
                 End If
             End If
@@ -200,6 +213,10 @@ Private Function GecmistenCek(ByRef bulundu As Boolean) As String
     Set c = GecmisOku()
     If c.Count = 0 Then Exit Function
     GecmistenCek = c.Item(c.Count): bulundu = True
+    If c.Count = 1 Then          ' son giris de cekildi -> yigin BOS:
+        GecmisiSil               ' dosyayi SIL (bos yigin = dosya yok -> path aninda sifirlanir)
+        Exit Function
+    End If
     gy = GecmisYolu()
     On Error GoTo Hata
     ff = FreeFile
@@ -219,6 +236,18 @@ Private Sub GecmisiSil()
     If gy <> "" Then If Dir(gy) <> "" Then Kill gy
     On Error GoTo 0
 End Sub
+
+' Gecmis dosyasinin UCUZ imzasi: "" = yigin bos (dosya yok), yoksa boyut|zaman.
+' Path onbellegi (gZincir) her guncellemede bununla dogrulanir; boylece gosterge
+' HER ZAMAN gercek yigini yansitir (yigin bosalinca path aninda sifirlanir).
+Private Function GecmisSig() As String
+    On Error Resume Next
+    Dim gy As String: gy = GecmisYolu()
+    If gy = "" Then Exit Function
+    If Dir(gy) = "" Then Exit Function
+    GecmisSig = CStr(FileLen(gy)) & "|" & CStr(FileDateTime(gy))
+    On Error GoTo 0
+End Function
 
 ' Cift-tetik korumasi: son navigasyonun TAMAMLANMASINDAN <0.4 sn gectiyse True
 ' (spurious ikinci tetigi yok say). Zaman damgasi hedef acilinca (NavInit) yazilir;
@@ -302,8 +331,13 @@ Public Sub NavPathGuncelle()
     If Not gPanelAcik Then Exit Sub
     If ActiveWorkbook Is Nothing Then Exit Sub
     If ActiveSheet Is Nothing Then Exit Sub
-    Dim s As String, zincir As String, guncel As String, nm As String
-    zincir = gZincir                ' ONBELLEK'ten (secim degisince dosyaya DOKUNMAZ)
+    Dim s As String, zincir As String, guncel As String, nm As String, sig As String
+    sig = GecmisSig()
+    If sig <> gZincirSig Then       ' yigin degisti/BOSALDI -> onbellegi tazele
+        If sig = "" Then gZincir = "" Else gZincir = GecmisZinciri()
+        gZincirSig = sig
+    End If
+    zincir = gZincir                ' onbellek: yigin degismedikce dosya OKUNMAZ
     guncel = DosyaEtiketi(ActiveWorkbook.FullName) & AY() & ActiveSheet.Name
     nm = AktifNavAdi()
     If nm <> "" Then guncel = guncel & AY() & ActiveCell.Text
@@ -426,7 +460,8 @@ Public Sub NavInit()
     If gPanelAcik Then NavKonumUygula: NavPathGuncelle: Exit Sub
     ' Kok dosya acilinca eski gecmisi temizle (path zinciri sifirdan baslasin)
     If BuDosyaKokMu() Then GecmisiSil
-    gZincir = GecmisZinciri()      ' zinciri dosya acilisinda BIR KEZ onbellege al
+    gZincir = GecmisZinciri()      ' zinciri acilista onbellege al (sonra imza kontrolu ile tazelenir)
+    gZincirSig = GecmisSig()
     Load frmNav
     If Not KonumYukle() Then
         gDx = Application.Width - frmNav.Width - 24   ' varsayilan: sag ust
@@ -654,6 +689,36 @@ H:
     Close #ff
 End Function
 
+' Hedef uzanti .xlsm/.xlsx mi? (degilse baglanti HARICI olarak kurulur)
+Private Function ExcelDosyasiMi(ByVal p As String) As Boolean
+    Dim u As String, k As Long
+    k = InStrRev(p, ".")
+    If k = 0 Then Exit Function
+    u = LCase$(Mid$(p, k + 1))
+    ExcelDosyasiMi = (u = "xlsm" Or u = "xlsx")
+End Function
+
+' nav_map'te bu anahtar HARICI dosya olarak mi isaretli? (sayfa alani = @EXT)
+Private Function HedefHariciMi(ByVal anahtar As String) As Boolean
+    HedefHariciMi = (StrComp(HedefSayfa(anahtar), HARICI_ISARET, vbTextCompare) = 0)
+End Function
+
+' Harici dosyayi Windows'un VARSAYILAN uygulamasiyla acar (Explorer'da cift-tik gibi).
+' ShellExecute yolu AYRI parametre olarak alir -> bosluk/Turkce karakter icin
+' tirnaklamaya gerek yok, komut satiri kacis sorunu olusmaz.
+Private Sub HariciAc(ByVal tamYol As String)
+    If Not WindowsMi() Then
+        MsgBox "External links can only be opened on Windows.", vbExclamation, "Forward"
+        Exit Sub
+    End If
+    On Error GoTo Hata
+    CreateObject("Shell.Application").ShellExecute tamYol, "", "", "open", 1
+    Exit Sub
+Hata:
+    MsgBox "Could not open external file:" & vbCrLf & tamYol & vbCrLf & vbCrLf & _
+           Err.Description, vbCritical, "Forward"
+End Sub
+
 ' Haritaya satir ekle/guncelle (ayni anahtar varsa degistirir; harita yoksa olusturur)
 Private Sub HaritaSatirYaz(ByVal anahtar As String, ByVal rel As String, ByVal sheet As String)
     Dim mp As String, yeniMi As Boolean, c As Collection
@@ -738,6 +803,9 @@ Public Sub NavBaglantiKur()
         Exit Sub
     End If
 
+    ' Hucrede zaten baglanti VARSA: kaldirmak icin ONAY sor. (Kullanicilar linki
+    ' nadiren siler; yanlislikla silmeyi onlemek icin dogrulama sekmesi cikar.)
+    ' Evet -> baglanti kaldirilir; Hayir/iptal -> hicbir sey degismez.
     Dim mevcut As String: mevcut = AktifNavAdi()
     If mevcut <> "" Then
         If MsgBox("This cell already has a link." & vbCrLf & _
@@ -748,35 +816,44 @@ Public Sub NavBaglantiKur()
     End If
 
     Dim f As Variant
-    f = Application.GetOpenFilename("Excel files (*.xlsm;*.xlsx),*.xlsm;*.xlsx", , "Select target file")
+    ' Excel secilirse normal navigasyon baglantisi; BASKA uzanti secilirse
+    ' HARICI baglanti kurulur ("All files" filtresine gecerek her tur secilebilir).
+    f = Application.GetOpenFilename( _
+        "Excel files (*.xlsm;*.xlsx),*.xlsm;*.xlsx,All files (*.*),*.*", 1, _
+        "Select target file")
     If VarType(f) = vbBoolean Then Exit Sub
     Dim hedefTam As String: hedefTam = CStr(f)
+    Dim harici As Boolean: harici = Not ExcelDosyasiMi(hedefTam)
 
-    Dim hata As String, sayfalar As Variant
-    sayfalar = SayfaAdlariniAl(hedefTam, hata)
-    If hata <> "" Then
-        MsgBox "Could not read the target file's sheets:" & vbCrLf & hata, vbExclamation, "Link Cell"
-        Exit Sub
-    End If
-    Dim secilen As String
-    If (UBound(sayfalar) - LBound(sayfalar)) = 0 Then
-        secilen = sayfalar(LBound(sayfalar))
+    Dim hata As String, sayfalar As Variant, secilen As String
+    If harici Then
+        secilen = HARICI_ISARET          ' sayfa alanina HARICI tip isareti yazilir
     Else
-        secilen = SayfaSec(sayfalar)
-        If secilen = "" Then Exit Sub
+        sayfalar = SayfaAdlariniAl(hedefTam, hata)
+        If hata <> "" Then
+            MsgBox "Could not read the target file's sheets:" & vbCrLf & hata, vbExclamation, "Link Cell"
+            Exit Sub
+        End If
+        If (UBound(sayfalar) - LBound(sayfalar)) = 0 Then
+            secilen = sayfalar(LBound(sayfalar))
+        Else
+            secilen = SayfaSec(sayfalar)
+            If secilen = "" Then Exit Sub
+        End If
     End If
 
     Dim disari As Boolean, rel As String
     rel = GoreceliYol(KokKlasor(), hedefTam, disari)
     If rel = "" Then
-        MsgBox "Could not compute a relative path (target may be on a different drive).", vbExclamation, "Link Cell"
-        Exit Sub
+        If harici Then
+            rel = hedefTam               ' farkli surucu -> harici hedef MUTLAK yolla saklanir
+            disari = True
+        Else
+            MsgBox "Could not compute a relative path (target may be on a different drive).", vbExclamation, "Link Cell"
+            Exit Sub
+        End If
     End If
-    If disari Then
-        If MsgBox("The target file is OUTSIDE the project folder." & vbCrLf & _
-                  "The link may break if you move the files." & vbCrLf & vbCrLf & _
-                  "Continue anyway?", vbYesNo + vbExclamation, "Link Cell") <> vbYes Then Exit Sub
-    End If
+    ' (Proje klasoru disi uyarisi kaldirildi: sormadan devam edilir.)
 
     Dim nm As String, taban As String, kk As Long
     ' Anahtar GLOBAL benzersiz olmali (nav_map anahtarlari tum dosyalarda ortak):
@@ -798,9 +875,8 @@ Public Sub NavBaglantiKur()
 
     HaritaSatirYaz nm, rel, secilen
     NavPathGuncelle
-    MsgBox "Link created:" & vbCrLf & _
-           "'" & hc.Text & "'  ->  " & UzantisizAd(BaseAd(hedefTam)) & "  >  " & secilen, _
-           vbInformation, "Link Cell"
+    ' (Basari bilgi mesaji kaldirildi: islem sessizce tamamlanir; hucre
+    '  mavi + alti cizili olur, kullanici ekstra pencereye tiklamak zorunda kalmaz.)
     Exit Sub
 GenelHata:
     MsgBox "Could not create link:" & vbCrLf & Err.Description, vbCritical, "Link Cell"
@@ -848,6 +924,14 @@ Public Sub NavIleri()
     hedef = YolCoz(navName, hataMsj)
     If hedef = "" Then gNavCalisiyor = False: MsgBox hataMsj, vbExclamation, "Forward": Exit Sub
     If Dir(hedef) = "" Then gNavCalisiyor = False: MsgBox "Target file not found:" & vbCrLf & hedef, vbExclamation, "Forward": Exit Sub
+    ' HARICI hedef: varsayilan uygulamada AYRI pencerede ac. Bu dosya ACIK kalir,
+    ' gecmis yiginina EKLENMEZ, path DEGISMEZ (navigasyon ayni yerde durur).
+    If HedefHariciMi(navName) Then
+        HariciAc hedef
+        gNavCalisiyor = False
+        NavTamamlandiIsaretle            ' cift-tik debounce damgasi
+        Exit Sub
+    End If
     oDosya = ThisWorkbook.FullName
     oSayfa = ActiveSheet.Name
     oEtiket = ""

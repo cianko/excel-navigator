@@ -17,6 +17,10 @@ NAVIGATING
    -> the link target opens and the file you were in closes.
  - Back (<) -> returns to the file you came from.
  - The "path" text on the panel shows where you currently are, live.
+ - Some menu cells may link to a NON-Excel file (PDF, photo, Word, a
+   program...). Forward then opens it in its OWN window with the Windows
+   default app; the Excel file you are in STAYS OPEN and the path does not
+   change. Just close that window when you are done - no Back needed.
  - NOTE: CLICKING a menu cell does not navigate; it only selects it.
    To go, you must use the Forward button.
 

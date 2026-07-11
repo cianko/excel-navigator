@@ -66,8 +66,10 @@ WHAT IS IN THIS KIT?
   Open your MAIN file. The "Navigation" panel appears (top-right).
     a. Select the cell you want to turn into a menu link.
     b. Click "Link Cell" on the panel.
-    c. Pick the target .xlsm/.xlsx file.
-    d. If it has several sheets, pick which sheet to open.
+    c. Pick the target file: another Excel file (.xlsm/.xlsx), OR any other
+       file - PDF, photo, Word document, a program (.exe)... For non-Excel
+       targets switch the file dialog's filter to "All files (*.*)".
+    d. Excel target with several sheets: pick which sheet to open.
     e. Done: the cell turns blue + underlined; the link is saved.
   IMPORTANT: make the FIRST link from your MAIN (start) file, so the system
   marks it as the root. A nav_map.txt file is created automatically - you
@@ -75,6 +77,13 @@ WHAT IS IN THIS KIT?
   To navigate: select a menu cell, then click Forward. Back returns to the
   previous file. To remove a link: select the linked cell, click Link Cell
   again > Yes.
+
+  EXTERNAL (non-Excel) LINKS: when the target is not .xlsm/.xlsx, the cell
+  is saved as an EXTERNAL link. Forward opens it in its OWN window with the
+  Windows default app (like double-clicking it in Explorer). The Excel file
+  you are in STAYS OPEN, the link is NOT added to Back history, and the path
+  text does not change. External files are endpoints: the installer and the
+  watcher never convert them or install anything into them.
 
 --------------------------------------------------------------------
  THE AUTO-WATCHER   (turned on by INSTALL.cmd)

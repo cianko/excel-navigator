@@ -29,6 +29,8 @@ no macros to write. One `INSTALL.cmd` sets everything up in a single click.
 - ⬅️ **Back / Forward** navigation with full history
 - 🧵 **Live breadcrumb** — `File › Sheet › Cell`, updated as you move
 - 🖱️ **Visual "Link Cell" wizard** — click a cell, pick a target file & sheet, done
+- 📎 **External links** — link a cell to a PDF, image, Word doc, or any program: **Forward** opens
+  it in its own window with the Windows default app, while the workbook (and history) stay put
 - 🔗 **Relative paths** — move or share the whole folder, links keep working
 - ⚡ **One-click `INSTALL.cmd`** — installs into every file **and** turns on the auto-watcher
 - 👀 **Auto-watcher** — drop a new `.xlsx` in the folder and it becomes a fully set-up `.xlsm`
@@ -69,6 +71,10 @@ system/         ← everything else (scripts + guides)
 Select a cell → **Link Cell** → pick the target file (and sheet) → the cell turns into a blue link.
 Make the **first** link from your main file so it's marked as the "home" file. A `nav_map.txt` is
 created automatically — you never edit it by hand. To go: select a link, click **Forward**.
+
+Targets don't have to be Excel files: switch the dialog filter to **All files** and pick a PDF,
+image, Word document, or program. These **external links** open in their own window with the
+Windows default app — the workbook stays open and they never join the Back history.
 
 ## 🔁 The auto-watcher
 
